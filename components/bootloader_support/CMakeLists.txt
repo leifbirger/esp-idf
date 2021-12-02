@@ -26,6 +26,7 @@ if(BOOTLOADER_BUILD)
     "src/bootloader_console_loader.c"
     "src/bootloader_panic.c"
     "src/${IDF_TARGET}/bootloader_sha.c"
+    "src/${IDF_TARGET}/bootloader_soc.c"
     "src/${IDF_TARGET}/bootloader_${IDF_TARGET}.c"
     )
     list(APPEND priv_requires hal)
@@ -34,7 +35,8 @@ else()
         "src/idf/bootloader_sha.c")
     set(include_dirs "include")
     set(priv_include_dirs "include_bootloader")
-    set(priv_requires spi_flash mbedtls efuse app_update)
+    # heap is required for `heap_memory_layout.h` header
+    set(priv_requires spi_flash mbedtls efuse app_update heap)
 endif()
 
 if(BOOTLOADER_BUILD)

@@ -1,7 +1,6 @@
 components/app_update/otatool.py
 components/efuse/efuse_table_gen.py
 components/efuse/test_efuse_host/efuse_tests.py
-components/esp32s2/test/gen_digital_signature_tests.py
 components/esp_local_ctrl/python/esp_local_ctrl_pb2.py
 components/esp_netif/test_apps/component_ut_test.py
 components/espcoredump/corefile/gdb.py
@@ -25,8 +24,6 @@ components/wifi_provisioning/python/wifi_constants_pb2.py
 components/wifi_provisioning/python/wifi_scan_pb2.py
 components/xtensa/trax/traceparse.py
 docs/build_docs.py
-docs/conf_common.py
-docs/en/conf.py
 docs/extensions/google_analytics.py
 docs/extensions/html_redirects.py
 docs/extensions/list_filter.py
@@ -76,7 +73,7 @@ examples/protocols/cbor/example_test.py
 examples/protocols/esp_http_client/esp_http_client_test.py
 examples/protocols/esp_local_ctrl/example_test.py
 examples/protocols/esp_local_ctrl/scripts/esp_local_ctrl.py
-examples/protocols/esp_local_ctrl/scripts/proto.py
+examples/protocols/esp_local_ctrl/scripts/proto_lc.py
 examples/protocols/http_server/advanced_tests/http_server_advanced_test.py
 examples/protocols/http_server/advanced_tests/scripts/test.py
 examples/protocols/http_server/persistent_sockets/http_server_persistence_test.py
@@ -97,6 +94,7 @@ examples/protocols/openssl_client/example_test.py
 examples/protocols/openssl_server/example_test.py
 examples/protocols/pppos_client/example_test.py
 examples/protocols/sntp/example_test.py
+examples/protocols/sockets/non_blocking/example_test.py
 examples/protocols/sockets/tcp_client/example_test.py
 examples/protocols/sockets/tcp_server/example_test.py
 examples/protocols/sockets/udp_client/example_test.py
@@ -144,8 +142,8 @@ examples/system/startup_time/example_test.py
 examples/system/sysview_tracing/example_test.py
 examples/system/sysview_tracing_heap_log/example_test.py
 examples/system/task_watchdog/example_test.py
-examples/system/ulp/example_test.py
-examples/system/ulp_adc/example_test.py
+examples/system/ulp_fsm/ulp/example_test.py
+examples/system/ulp_fsm/ulp_adc/example_test.py
 examples/system/unit_test/example_test.py
 examples/wifi/iperf/iperf_test.py
 tools/ble/lib_ble_client.py
@@ -230,7 +228,6 @@ tools/idf_py_actions/global_options.py
 tools/idf_py_actions/serial_ext.py
 tools/idf_py_actions/tools.py
 tools/idf_py_actions/uf2_ext.py
-tools/idf_size.py
 tools/kconfig_new/confgen.py
 tools/kconfig_new/confserver.py
 tools/kconfig_new/esp-windows-curses/setup.py
@@ -271,7 +268,6 @@ tools/test_idf_py/extra_path/some_ext.py
 tools/test_idf_py/idf_ext.py
 tools/test_idf_py/test_idf_extensions/test_ext/test_extension.py
 tools/test_idf_py/test_idf_py.py
-tools/test_idf_size/test_idf_size.py
 tools/test_idf_tools/test_idf_tools.py
 tools/test_mkdfu/test_mkdfu.py
 tools/test_mkuf2/test_mkuf2.py
@@ -280,6 +276,3 @@ tools/unit-test-app/tools/CreateSectionTable.py
 tools/unit-test-app/tools/UnitTestParser.py
 tools/unit-test-app/unit_test.py
 tools/windows/eclipse_make.py
-tools/windows/tool_setup/system_check/system_check_download.py
-tools/windows/tool_setup/system_check/system_check_subprocess.py
-tools/windows/tool_setup/system_check/system_check_virtualenv.py

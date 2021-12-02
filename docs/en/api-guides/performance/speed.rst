@@ -91,8 +91,8 @@ Although standard output is buffered, it's possible for an application to be lim
 .. list::
 
     - Reduce the volume of log output by lowering the app :ref:`CONFIG_LOG_DEFAULT_LEVEL` (the equivalent bootloader setting is :ref:`CONFIG_BOOTLOADER_LOG_LEVEL`). This also reduces the binary size, and saves some CPU time spent on string formatting.
-    :not SOC_USB_SUPPORTED: - Increase the speed of logging output by increasing the :ref:`CONFIG_ESP_CONSOLE_UART_BAUDRATE`
-    :SOC_USB_SUPPORTED: - Increase the speed of logging output by increasing the :ref:`CONFIG_ESP_CONSOLE_UART_BAUDRATE`. (Unless using internal USB-CDC for serial console, in which case the serial throughput doesn't depend on the configured baud rate.)
+    :not SOC_USB_OTG_SUPPORTED: - Increase the speed of logging output by increasing the :ref:`CONFIG_ESP_CONSOLE_UART_BAUDRATE`
+    :SOC_USB_OTG_SUPPORTED: - Increase the speed of logging output by increasing the :ref:`CONFIG_ESP_CONSOLE_UART_BAUDRATE`. (Unless using internal USB-CDC for serial console, in which case the serial throughput doesn't depend on the configured baud rate.)
 
 Not Recommended
 ^^^^^^^^^^^^^^^
@@ -115,6 +115,8 @@ The following changes will increase the speed of a chosen part of the firmware a
     - Move frequently executed code to IRAM. By default, all code in the app is executed from flash cache. This means that it's possible for the CPU to have to wait on a "cache miss" while the next instructions are loaded from flash. Functions which are copied into IRAM are loaded once at boot time, and then will always execute at full speed.
 
       IRAM is a limited resource, and using more IRAM may reduce available DRAM, so a strategic approach is needed when moving code to IRAM. See :ref:`iram` for more information.
+
+    -  Jump table optimizations can be re-enabled for individual source files that don't need to be placed in IRAM. For hot paths in large switch cases this will improve performance. For instructions on how to add the -fjump-tables -ftree-switch-conversion options when compiling individual source files, see :ref:`component_build_control`
 
 Improving Startup Time
 ----------------------

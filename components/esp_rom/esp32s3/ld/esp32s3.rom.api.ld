@@ -2,6 +2,11 @@
  * ROM APIs
  */
 
+/* user may provide newer version of tjpgd */
+/* so here directly assign the symbols with the ROM API address to make sure one from rom is correctly linked */
+PROVIDE ( esp_rom_tjpgd_decomp = 0x40000864 );
+PROVIDE ( esp_rom_tjpgd_prepare = 0x40000858 );
+
 PROVIDE ( esp_rom_crc32_le = crc32_le );
 PROVIDE ( esp_rom_crc16_le = crc16_le );
 PROVIDE ( esp_rom_crc8_le  = crc8_le );
@@ -37,5 +42,6 @@ PROVIDE ( esp_rom_md5_final  = MD5Final );
 PROVIDE ( esp_rom_printf   = ets_printf );
 PROVIDE ( esp_rom_delay_us = ets_delay_us );
 PROVIDE ( esp_rom_install_uart_printf = ets_install_uart_printf );
+PROVIDE ( esp_rom_get_reset_reason = rtc_get_reset_reason );
 
 PROVIDE( esp_rom_spiflash_attach = spi_flash_attach );

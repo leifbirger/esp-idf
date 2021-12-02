@@ -1,16 +1,9 @@
-// Copyright 2017-2021 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef _SOC_RTC_CNTL_REG_H_
 #define _SOC_RTC_CNTL_REG_H_
 
@@ -20,20 +13,9 @@
 extern "C" {
 #endif
 
-/* The value that needs to be written to RTC_CNTL_WDT_WKEY to write-enable the wdt registers */
-#define RTC_CNTL_WDT_WKEY_VALUE 0x50D83AA1
 /* The value that needs to be written to RTC_CNTL_SWD_WPROTECT_REG to write-enable the wdt registers */
 #define RTC_CNTL_SWD_WKEY_VALUE 0x8F1D312A
 
-/* Possible values for RTC_CNTL_WDT_CPU_RESET_LENGTH and RTC_CNTL_WDT_SYS_RESET_LENGTH */
-#define RTC_WDT_RESET_LENGTH_100_NS    0
-#define RTC_WDT_RESET_LENGTH_200_NS    1
-#define RTC_WDT_RESET_LENGTH_300_NS    2
-#define RTC_WDT_RESET_LENGTH_400_NS    3
-#define RTC_WDT_RESET_LENGTH_500_NS    4
-#define RTC_WDT_RESET_LENGTH_800_NS    5
-#define RTC_WDT_RESET_LENGTH_1600_NS   6
-#define RTC_WDT_RESET_LENGTH_3200_NS   7
 #define RTC_CNTL_TIME0_REG		RTC_CNTL_TIME_LOW0_REG
 #define RTC_CNTL_TIME1_REG		RTC_CNTL_TIME_HIGH0_REG
 
@@ -2041,13 +2023,6 @@ ork.*/
 #define RTC_CNTL_WDT_STG3_M  ((RTC_CNTL_WDT_STG3_V)<<(RTC_CNTL_WDT_STG3_S))
 #define RTC_CNTL_WDT_STG3_V  0x7
 #define RTC_CNTL_WDT_STG3_S  19
-/* RTC_CNTL_WDT_STGX : */
-/*description: stage action selection values */
-#define RTC_WDT_STG_SEL_OFF             0
-#define RTC_WDT_STG_SEL_INT             1
-#define RTC_WDT_STG_SEL_RESET_CPU       2
-#define RTC_WDT_STG_SEL_RESET_SYSTEM    3
-#define RTC_WDT_STG_SEL_RESET_RTC       4
 
 /* RTC_CNTL_WDT_CPU_RESET_LENGTH : R/W ;bitpos:[18:16] ;default: 3'h1 ; */
 /*description: CPU reset counter length.*/
@@ -3051,30 +3026,30 @@ ork.*/
 #define RTC_CNTL_TOUCH_DEBOUNCE_M  ((RTC_CNTL_TOUCH_DEBOUNCE_V)<<(RTC_CNTL_TOUCH_DEBOUNCE_S))
 #define RTC_CNTL_TOUCH_DEBOUNCE_V  0x7
 #define RTC_CNTL_TOUCH_DEBOUNCE_S  25
-/* RTC_CNTL_TOUCH_HYSTERESIS : R/W ;bitpos:[24:23] ;default: 2'd1 ; */
-/*description: .*/
-#define RTC_CNTL_TOUCH_HYSTERESIS    0x00000003
-#define RTC_CNTL_TOUCH_HYSTERESIS_M  ((RTC_CNTL_TOUCH_HYSTERESIS_V)<<(RTC_CNTL_TOUCH_HYSTERESIS_S))
-#define RTC_CNTL_TOUCH_HYSTERESIS_V  0x3
-#define RTC_CNTL_TOUCH_HYSTERESIS_S  23
+/* RTC_CNTL_TOUCH_CONFIG3 : R/W ;bitpos:[24:23] ;default: 2'd1 ; */
+/*description: */
+#define RTC_CNTL_TOUCH_CONFIG3 0x00000003
+#define RTC_CNTL_TOUCH_CONFIG3_M ((RTC_CNTL_TOUCH_CONFIG3_V) << (RTC_CNTL_TOUCH_CONFIG3_S))
+#define RTC_CNTL_TOUCH_CONFIG3_V 0x3
+#define RTC_CNTL_TOUCH_CONFIG3_S 23
 /* RTC_CNTL_TOUCH_NOISE_THRES : R/W ;bitpos:[22:21] ;default: 2'd1 ; */
 /*description: .*/
 #define RTC_CNTL_TOUCH_NOISE_THRES    0x00000003
 #define RTC_CNTL_TOUCH_NOISE_THRES_M  ((RTC_CNTL_TOUCH_NOISE_THRES_V)<<(RTC_CNTL_TOUCH_NOISE_THRES_S))
 #define RTC_CNTL_TOUCH_NOISE_THRES_V  0x3
 #define RTC_CNTL_TOUCH_NOISE_THRES_S  21
-/* RTC_CNTL_TOUCH_NEG_NOISE_THRES : R/W ;bitpos:[20:19] ;default: 2'd1 ; */
-/*description: .*/
-#define RTC_CNTL_TOUCH_NEG_NOISE_THRES    0x00000003
-#define RTC_CNTL_TOUCH_NEG_NOISE_THRES_M  ((RTC_CNTL_TOUCH_NEG_NOISE_THRES_V)<<(RTC_CNTL_TOUCH_NEG_NOISE_THRES_S))
-#define RTC_CNTL_TOUCH_NEG_NOISE_THRES_V  0x3
-#define RTC_CNTL_TOUCH_NEG_NOISE_THRES_S  19
-/* RTC_CNTL_TOUCH_NEG_NOISE_LIMIT : R/W ;bitpos:[18:15] ;default: 4'd5 ; */
-/*description: negative threshold counter limit.*/
-#define RTC_CNTL_TOUCH_NEG_NOISE_LIMIT    0x0000000F
-#define RTC_CNTL_TOUCH_NEG_NOISE_LIMIT_M  ((RTC_CNTL_TOUCH_NEG_NOISE_LIMIT_V)<<(RTC_CNTL_TOUCH_NEG_NOISE_LIMIT_S))
-#define RTC_CNTL_TOUCH_NEG_NOISE_LIMIT_V  0xF
-#define RTC_CNTL_TOUCH_NEG_NOISE_LIMIT_S  15
+/* RTC_CNTL_TOUCH_CONFIG2 : R/W ;bitpos:[20:19] ;default: 2'd1 ; */
+/*description: */
+#define RTC_CNTL_TOUCH_CONFIG2 0x00000003
+#define RTC_CNTL_TOUCH_CONFIG2_M ((RTC_CNTL_TOUCH_CONFIG2_V) << (RTC_CNTL_TOUCH_CONFIG2_S))
+#define RTC_CNTL_TOUCH_CONFIG2_V 0x3
+#define RTC_CNTL_TOUCH_CONFIG2_S 19
+/* RTC_CNTL_TOUCH_CONFIG1 : R/W ;bitpos:[18:15] ;default: 4'd5 ; */
+/*description: */
+#define RTC_CNTL_TOUCH_CONFIG1 0x0000000F
+#define RTC_CNTL_TOUCH_CONFIG1_M ((RTC_CNTL_TOUCH_CONFIG1_V) << (RTC_CNTL_TOUCH_CONFIG1_S))
+#define RTC_CNTL_TOUCH_CONFIG1_V 0xF
+#define RTC_CNTL_TOUCH_CONFIG1_S 15
 /* RTC_CNTL_TOUCH_JITTER_STEP : R/W ;bitpos:[14:11] ;default: 4'd1 ; */
 /*description: touch jitter step.*/
 #define RTC_CNTL_TOUCH_JITTER_STEP    0x0000000F
@@ -3093,12 +3068,12 @@ ork.*/
 #define RTC_CNTL_TOUCH_BYPASS_NOISE_THRES_M  (BIT(8))
 #define RTC_CNTL_TOUCH_BYPASS_NOISE_THRES_V  0x1
 #define RTC_CNTL_TOUCH_BYPASS_NOISE_THRES_S  8
-/* RTC_CNTL_TOUCH_BYPASS_NEG_NOISE_THRES : R/W ;bitpos:[7] ;default: 1'b0 ; */
-/*description: .*/
-#define RTC_CNTL_TOUCH_BYPASS_NEG_NOISE_THRES    (BIT(7))
-#define RTC_CNTL_TOUCH_BYPASS_NEG_NOISE_THRES_M  (BIT(7))
-#define RTC_CNTL_TOUCH_BYPASS_NEG_NOISE_THRES_V  0x1
-#define RTC_CNTL_TOUCH_BYPASS_NEG_NOISE_THRES_S  7
+/* RTC_CNTL_TOUCH_BYPASS_NEG_THRES : R/W ;bitpos:[7] ;default: 1'b0 ; */
+/*description: */
+#define RTC_CNTL_TOUCH_BYPASS_NEG_THRES (BIT(7))
+#define RTC_CNTL_TOUCH_BYPASS_NEG_THRES_M (BIT(7))
+#define RTC_CNTL_TOUCH_BYPASS_NEG_THRES_V 0x1
+#define RTC_CNTL_TOUCH_BYPASS_NEG_THRES_S 7
 
 #define RTC_CNTL_USB_CONF_REG          (DR_REG_RTCCNTL_BASE + 0x120)
 /* RTC_CNTL_SW_HW_USB_PHY_SEL : R/W ;bitpos:[20] ;default: 1'b0 ; */
@@ -3601,6 +3576,10 @@ ork.*/
 #define RTC_CNTL_FIB_SEL_M  ((RTC_CNTL_FIB_SEL_V)<<(RTC_CNTL_FIB_SEL_S))
 #define RTC_CNTL_FIB_SEL_V  0x7
 #define RTC_CNTL_FIB_SEL_S  0
+
+#define RTC_CNTL_FIB_GLITCH_RST BIT(0)
+#define RTC_CNTL_FIB_BOR_RST BIT(1)
+#define RTC_CNTL_FIB_SUPER_WDT_RST BIT(2)
 
 #define RTC_CNTL_TOUCH_DAC_REG          (DR_REG_RTCCNTL_BASE + 0x14C)
 /* RTC_CNTL_TOUCH_PAD0_DAC : R/W ;bitpos:[31:29] ;default: 3'd0 ; */

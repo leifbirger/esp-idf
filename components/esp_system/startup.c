@@ -1,16 +1,8 @@
-// Copyright 2015-2018 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <stdint.h>
 #include <string.h>
@@ -41,6 +33,7 @@
 #include "esp_flash_encrypt.h"
 #include "esp_secure_boot.h"
 #include "esp_sleep.h"
+#include "esp_xt_wdt.h"
 
 /***********************************************/
 // Headers for other components init functions
@@ -77,6 +70,8 @@
 #include "esp32s3/spiram.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/clk.h"
+#elif CONFIG_IDF_TARGET_ESP32H2
+#include "esp32h2/clk.h"
 #endif
 /***********************************************/
 
@@ -160,7 +155,7 @@ size_t __cxx_eh_arena_size_get(void)
  * The rest of the init_array sections is sorted for iteration in descending order during startup, however.
  * Hence a different section is generated for the init_priority functions which is looped
  * over in ascending direction instead of descending direction.
- * The RISC-V-specific behavior is dependent on the linker script esp32c3.project.ld.in.
+ * The RISC-V-specific behavior is dependent on the linker script ld/esp32c3/sections.ld.in.
  */
 static void do_global_ctors(void)
 {
@@ -264,7 +259,8 @@ static void do_core_init(void)
 #if CONFIG_ESP32_BROWNOUT_DET   || \
     CONFIG_ESP32S2_BROWNOUT_DET || \
     CONFIG_ESP32S3_BROWNOUT_DET || \
-    CONFIG_ESP32C3_BROWNOUT_DET
+    CONFIG_ESP32C3_BROWNOUT_DET || \
+    CONFIG_ESP32H2_BROWNOUT_DET
     // [refactor-todo] leads to call chain rtc_is_register (driver) -> esp_intr_alloc (esp32/esp32s2) ->
     // malloc (newlib) -> heap_caps_malloc (heap), so heap must be at least initialized
     esp_brownout_init();
@@ -296,19 +292,6 @@ static void do_core_init(void)
 #endif // defined(CONFIG_VFS_SUPPORT_IO) && !defined(CONFIG_ESP_CONSOLE_NONE)
 
     esp_err_t err __attribute__((unused));
-
-    // [refactor-todo] move this to secondary init
-#if CONFIG_APPTRACE_ENABLE
-    err = esp_apptrace_init();
-    assert(err == ESP_OK && "Failed to init apptrace module on PRO CPU!");
-#endif
-#if CONFIG_SYSVIEW_ENABLE
-    SEGGER_SYSVIEW_Conf();
-#endif
-
-#if CONFIG_ESP_DEBUG_STUBS_ENABLE
-    esp_dbg_stubs_init();
-#endif
 
     err = esp_pthread_init();
     assert(err == ESP_OK && "Failed to init pthread module!");
@@ -353,6 +336,15 @@ static void do_core_init(void)
 #if defined(CONFIG_SECURE_BOOT) || defined(CONFIG_SECURE_SIGNED_ON_UPDATE_NO_SECURE_BOOT)
     // Note: in some configs this may read flash, so placed after flash init
     esp_secure_boot_init_checks();
+#endif
+
+#if CONFIG_ESP_XT_WDT
+    esp_xt_wdt_config_t cfg = {
+        .timeout                = CONFIG_ESP_XT_WDT_TIMEOUT,
+        .auto_backup_clk_enable = CONFIG_ESP_XT_WDT_BACKUP_CLK_ENABLE,
+    };
+    err = esp_xt_wdt_init(&cfg);
+    assert(err == ESP_OK && "Failed to init xtwdt");
 #endif
 }
 
@@ -450,6 +442,18 @@ IRAM_ATTR ESP_SYSTEM_INIT_FN(init_components0, BIT(0))
     esp_sleep_enable_gpio_switch(true);
 #endif
 
+#if CONFIG_APPTRACE_ENABLE
+    esp_err_t err = esp_apptrace_init();
+    assert(err == ESP_OK && "Failed to init apptrace module on PRO CPU!");
+#endif
+#if CONFIG_APPTRACE_SV_ENABLE
+    SEGGER_SYSVIEW_Conf();
+#endif
+
+#if CONFIG_ESP_DEBUG_STUBS_ENABLE
+    esp_dbg_stubs_init();
+#endif
+
 #if defined(CONFIG_PM_ENABLE)
     esp_pm_impl_init();
 #endif
@@ -462,7 +466,7 @@ IRAM_ATTR ESP_SYSTEM_INIT_FN(init_components0, BIT(0))
     esp_apb_backup_dma_lock_init();
 #endif
 
-#if CONFIG_SW_COEXIST_ENABLE
+#if CONFIG_SW_COEXIST_ENABLE || CONFIG_EXTERNAL_COEX_ENABLE
     esp_coex_adapter_register(&g_coex_adapter_funcs);
     coex_pre_init();
 #endif

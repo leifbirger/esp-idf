@@ -36,7 +36,6 @@ if(${target} STREQUAL "esp32")
                      "esp32/touch_sensor.c"
                      "esp32/adc.c"
                      "esp32/dac.c")
-    list(APPEND includes "esp32/include")
 endif()
 
 if(IDF_TARGET STREQUAL "esp32s2")
@@ -50,7 +49,6 @@ if(IDF_TARGET STREQUAL "esp32s2")
                      "esp32s2/adc.c"
                      "esp32s2/adc2_init_cal.c"
                      "esp32s2/dac.c")
-    list(APPEND includes "esp32s2/include")
 endif()
 
 if(${target} STREQUAL "esp32s3")
@@ -60,8 +58,10 @@ if(${target} STREQUAL "esp32s3")
                      "sdmmc_host.c"
                      "sdmmc_transaction.c"
                      "mcpwm.c"
+                     "usb_serial_jtag.c"
                      "spi_slave_hd.c"
                      "touch_sensor_common.c"
+                     "esp32s3/touch_sensor.c"
                     )
 endif()
 
@@ -69,9 +69,21 @@ if(IDF_TARGET STREQUAL "esp32c3")
     list(APPEND srcs "gdma.c"
                      "spi_slave_hd.c"
                      "adc_common.c"
+                     "dedic_gpio.c"
+                     "usb_serial_jtag.c"
                      "esp32c3/adc.c"
                      "esp32c3/adc2_init_cal.c"
                      "esp32c3/rtc_tempsensor.c")
+endif()
+
+if(IDF_TARGET STREQUAL "esp32h2")
+    list(APPEND srcs "gdma.c"
+                     "spi_slave_hd.c"
+                     "adc_common.c"
+                     "dedic_gpio.c"
+                     "esp32h2/adc.c"
+                     "esp32h2/adc2_init_cal.c"
+                     "esp32h2/rtc_tempsensor.c")
 endif()
 
 idf_component_register(SRCS "${srcs}"

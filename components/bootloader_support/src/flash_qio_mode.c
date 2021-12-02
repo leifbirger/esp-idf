@@ -21,6 +21,8 @@
 #include "esp32s3/rom/spi_flash.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/rom/spi_flash.h"
+#elif CONFIG_IDF_TARGET_ESP32H2
+#include "esp32h2/rom/spi_flash.h"
 #endif
 #include "soc/efuse_periph.h"
 #include "soc/io_mux_reg.h"
@@ -102,14 +104,6 @@ static esp_err_t enable_qio_mode(read_status_fn_t read_status_fn,
 
    The command passed here is always the on-the-wire command given to the SPI flash unit.
 */
-
-/* dummy_len_plus values defined in ROM for SPI flash configuration */
-uint32_t bootloader_read_flash_id(void)
-{
-    uint32_t id = bootloader_execute_flash_command(CMD_RDID, 0, 0, 24);
-    id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
-    return id;
-}
 
 void bootloader_enable_qio_mode(void)
 {

@@ -34,6 +34,7 @@
 #include "bootloader_mem.h"
 #include "bootloader_console.h"
 #include "bootloader_flash_priv.h"
+#include "bootloader_soc.h"
 #include "esp_efuse.h"
 
 
@@ -139,7 +140,7 @@ static void print_flash_info(const esp_image_header_t *bootloader_hdr)
         str = "20MHz";
         break;
     }
-    ESP_LOGI(TAG, "SPI Speed      : %s", str);
+    ESP_LOGI(TAG, "Boot SPI Speed : %s", str);
 
     /* SPI mode could have been set to QIO during boot already,
        so test the SPI registers not the flash header */
@@ -199,7 +200,7 @@ static esp_err_t bootloader_init_spi_flash(void)
     }
 #endif
 
-    esp_rom_spiflash_unlock();
+    bootloader_flash_unlock();
 
 #if CONFIG_ESPTOOLPY_FLASHMODE_QIO || CONFIG_ESPTOOLPY_FLASHMODE_QOUT
     bootloader_enable_qio_mode();
@@ -265,18 +266,26 @@ static void wdt_reset_info_dump(int cpu)
 static void bootloader_check_wdt_reset(void)
 {
     int wdt_rst = 0;
-    RESET_REASON rst_reas[2];
+    soc_reset_reason_t rst_reas[2];
 
-    rst_reas[0] = rtc_get_reset_reason(0);
-    if (rst_reas[0] == RTCWDT_SYS_RESET || rst_reas[0] == TG0WDT_SYS_RESET || rst_reas[0] == TG1WDT_SYS_RESET ||
-            rst_reas[0] == TG0WDT_CPU_RESET || rst_reas[0] == TG1WDT_CPU_RESET || rst_reas[0] == RTCWDT_CPU_RESET) {
+    rst_reas[0] = esp_rom_get_reset_reason(0);
+    rst_reas[1] = esp_rom_get_reset_reason(1);
+    if (rst_reas[0] == RESET_REASON_CORE_RTC_WDT || rst_reas[0] == RESET_REASON_CORE_MWDT0 || rst_reas[0] == RESET_REASON_CORE_MWDT1 ||
+        rst_reas[0] == RESET_REASON_CPU0_MWDT0 || rst_reas[0] == RESET_REASON_CPU0_RTC_WDT) {
         ESP_LOGW(TAG, "PRO CPU has been reset by WDT.");
+        wdt_rst = 1;
+    }
+    if (rst_reas[1] == RESET_REASON_CORE_RTC_WDT || rst_reas[1] == RESET_REASON_CORE_MWDT0 || rst_reas[1] == RESET_REASON_CORE_MWDT1 ||
+        rst_reas[1] == RESET_REASON_CPU1_MWDT1 || rst_reas[1] == RESET_REASON_CPU1_RTC_WDT) {
+        ESP_LOGW(TAG, "APP CPU has been reset by WDT.");
         wdt_rst = 1;
     }
     if (wdt_rst) {
         // if reset by WDT dump info from trace port
         wdt_reset_info_dump(0);
+#if !CONFIG_FREERTOS_UNICORE
         wdt_reset_info_dump(1);
+#endif
     }
     wdt_reset_cpu0_info_enable();
 }
@@ -288,9 +297,18 @@ static void bootloader_super_wdt_auto_feed(void)
     REG_WRITE(RTC_CNTL_SWD_WPROTECT_REG, 0);
 }
 
+static inline void bootloader_ana_reset_config(void)
+{
+    //Enable WDT, BOR, and GLITCH reset
+    bootloader_ana_super_wdt_reset_config(true);
+    bootloader_ana_bod_reset_config(true);
+    bootloader_ana_clock_glitch_reset_config(true);
+}
+
 esp_err_t bootloader_init(void)
 {
     esp_err_t ret = ESP_OK;
+    bootloader_ana_reset_config();
     bootloader_super_wdt_auto_feed();
     // protect memory region
     bootloader_init_mem();
@@ -320,6 +338,11 @@ esp_err_t bootloader_init(void)
     bootloader_print_banner();
     // update flash ID
     bootloader_flash_update_id();
+    // Check and run XMC startup flow
+    if ((ret = bootloader_flash_xmc_startup()) != ESP_OK) {
+        ESP_LOGE(TAG, "failed when running XMC startup flow, reboot!");
+        goto err;
+    }
     // read bootloader header
     if ((ret = bootloader_read_bootloader_header()) != ESP_OK) {
         goto err;

@@ -17,10 +17,13 @@
 #include "esp32s3/rom/spi_flash.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/rom/spi_flash.h"
+#elif CONFIG_IDF_TARGET_ESP32H2
+#include "esp32h2/rom/spi_flash.h"
 #endif
 #include "esp_rom_crc.h"
 #include "esp_rom_gpio.h"
 #include "esp_rom_sys.h"
+#include "esp_rom_efuse.h"
 #include "esp_flash_partitions.h"
 #include "bootloader_flash_priv.h"
 #include "bootloader_common.h"
@@ -39,17 +42,22 @@ static const char* TAG = "boot_comm";
 
 esp_comm_gpio_hold_t bootloader_common_check_long_hold_gpio(uint32_t num_pin, uint32_t delay_sec)
 {
+    return bootloader_common_check_long_hold_gpio_level(num_pin, delay_sec, false);
+}
+
+esp_comm_gpio_hold_t bootloader_common_check_long_hold_gpio_level(uint32_t num_pin, uint32_t delay_sec, bool level)
+{
     esp_rom_gpio_pad_select_gpio(num_pin);
     if (GPIO_PIN_MUX_REG[num_pin]) {
         PIN_INPUT_ENABLE(GPIO_PIN_MUX_REG[num_pin]);
     }
     esp_rom_gpio_pad_pullup_only(num_pin);
     uint32_t tm_start = esp_log_early_timestamp();
-    if (gpio_ll_get_level(&GPIO, num_pin) == 1) {
+    if (gpio_ll_get_level(&GPIO, num_pin) != level) {
         return GPIO_NOT_HOLD;
     }
     do {
-        if (gpio_ll_get_level(&GPIO, num_pin) != 0) {
+        if (gpio_ll_get_level(&GPIO, num_pin) != level) {
             return GPIO_SHORT_HOLD;
         }
     } while (delay_sec > ((esp_log_early_timestamp() - tm_start) / 1000L));
@@ -184,8 +192,19 @@ void bootloader_common_vddsdio_configure(void)
 #endif // CONFIG_BOOTLOADER_VDDSDIO_BOOST
 }
 
-
 RESET_REASON bootloader_common_get_reset_reason(int cpu_no)
 {
-    return rtc_get_reset_reason(cpu_no);
+    return (RESET_REASON)esp_rom_get_reset_reason(cpu_no);
+}
+
+uint8_t bootloader_flash_get_cs_io(void)
+{
+    uint8_t cs_io;
+    const uint32_t spiconfig = esp_rom_efuse_get_flash_gpio_info();
+    if (spiconfig == ESP_ROM_EFUSE_FLASH_DEFAULT_SPI) {
+        cs_io = SPI_CS0_GPIO_NUM;
+    } else {
+        cs_io = (spiconfig >> 18) & 0x3f;
+    }
+    return cs_io;
 }

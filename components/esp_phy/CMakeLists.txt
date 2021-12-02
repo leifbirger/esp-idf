@@ -8,7 +8,13 @@ else()
     set(ldfragments "linker.lf")
 endif()
 
-idf_component_register(SRCS "src/phy_init.c"
+if(IDF_TARGET STREQUAL "esp32h2")
+    set(srcs "src/phy_init_esp32hxx.c")
+else()
+    set(srcs "src/phy_init.c")
+endif()
+
+idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS "include" "${idf_target}/include"
                     PRIV_REQUIRES nvs_flash
                     LDFRAGMENTS "${ldfragments}")
@@ -16,21 +22,28 @@ idf_component_register(SRCS "src/phy_init.c"
 idf_build_get_property(build_dir BUILD_DIR)
 
 set(target_name "${idf_target}")
-target_link_libraries(${COMPONENT_LIB} PUBLIC "-L ${CMAKE_CURRENT_SOURCE_DIR}/lib/${target_name}")
+target_link_libraries(${COMPONENT_LIB} PUBLIC "-L \"${CMAKE_CURRENT_SOURCE_DIR}/lib/${target_name}\"")
 
 if(link_binary_libs)
     target_link_libraries(${COMPONENT_LIB} PUBLIC phy)
 
     idf_component_get_property(esp_phy_lib esp_phy COMPONENT_LIB)
-    target_link_libraries(${COMPONENT_LIB} INTERFACE $<TARGET_FILE:${esp_phy_lib}> libphy.a
-                          $<TARGET_FILE:${esp_phy_lib}>)
 
     if(CONFIG_IDF_TARGET_ESP32)
         target_link_libraries(${COMPONENT_LIB} PUBLIC rtc)
+        target_link_libraries(${COMPONENT_LIB} INTERFACE $<TARGET_FILE:${esp_phy_lib}> libphy.a librtc.a
+        $<TARGET_FILE:${esp_phy_lib}>)
     endif()
 
-    if(CONFIG_IDF_TARGET_ESP32C3 OR CONFIG_IDF_TARGET_ESP32S3)
+    if(CONFIG_IDF_TARGET_ESP32S2)
+        target_link_libraries(${COMPONENT_LIB} INTERFACE $<TARGET_FILE:${esp_phy_lib}> libphy.a
+        $<TARGET_FILE:${esp_phy_lib}>)
+    endif()
+
+    if(CONFIG_IDF_TARGET_ESP32C3 OR CONFIG_IDF_TARGET_ESP32S3 OR CONFIG_IDF_TARGET_ESP32H2)
         target_link_libraries(${COMPONENT_LIB} PUBLIC btbb)
+        target_link_libraries(${COMPONENT_LIB} INTERFACE $<TARGET_FILE:${esp_phy_lib}> libphy.a libbtbb.a
+        $<TARGET_FILE:${esp_phy_lib}>)
     endif()
 endif()
 

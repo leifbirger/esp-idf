@@ -15,6 +15,8 @@
 #include "esp_rom_sys.h"
 #include "esp_timer.h"
 
+#include "bootloader_flash.h"   //for bootloader_flash_xmc_startup
+
 #include "sdkconfig.h"
 #if CONFIG_IDF_TARGET_ESP32
 #include "esp32/rom/spi_flash.h"
@@ -337,6 +339,8 @@ TEST_CASE("Test spi_flash read/write performance", "[spi_flash]")
 
 #endif //!TEMPORARY_DISABLED_FOR_TARGETS(ESP32S3)
 
+//  TODO: This test is disabled on S3 with legacy impl - IDF-3505
+#if !TEMPORARY_DISABLED_FOR_TARGETS(ESP32, ESP32S2, ESP32S3, ESP32C3)
 
 #if portNUM_PROCESSORS > 1
 TEST_CASE("spi_flash deadlock with high priority busy-waiting task", "[spi_flash][esp_flash]")
@@ -396,6 +400,8 @@ TEST_CASE("spi_flash deadlock with high priority busy-waiting task", "[spi_flash
 }
 #endif // portNUM_PROCESSORS > 1
 
+#endif // !TEMPORARY_DISABLED_FOR_TARGETS(ESP32, ESP32S2, ESP32S3, ESP32C3)
+
 TEST_CASE("WEL is cleared after boot", "[spi_flash]")
 {
     esp_rom_spiflash_chip_t *legacy_chip = &g_rom_flashchip;
@@ -423,3 +429,21 @@ TEST_CASE("rom unlock will not erase QE bit", "[spi_flash]")
     TEST_ASSERT(status & 0x40);
 }
 #endif
+
+static IRAM_ATTR NOINLINE_ATTR void test_xmc_startup(void)
+{
+    extern void spi_flash_disable_interrupts_caches_and_other_cpu(void);
+    extern void spi_flash_enable_interrupts_caches_and_other_cpu(void);
+    esp_err_t ret = ESP_OK;
+
+    spi_flash_disable_interrupts_caches_and_other_cpu();
+    ret = bootloader_flash_xmc_startup();
+    spi_flash_enable_interrupts_caches_and_other_cpu();
+
+    TEST_ASSERT_EQUAL(ESP_OK, ret);
+}
+
+TEST_CASE("bootloader_flash_xmc_startup can be called when cache disabled", "[spi_flash]")
+{
+    test_xmc_startup();
+}

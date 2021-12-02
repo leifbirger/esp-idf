@@ -1,16 +1,11 @@
-// Copyright 2021 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+/* OpenThread Command Line Example
 
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include "esp_check.h"
 #include "esp_err.h"
@@ -19,22 +14,20 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 
-#if CONFIG_OPENTHREAD_ENABLE_TCP_SOCKET_EXAMPLE
 #define TAG "ot_socket"
 
 static void tcp_socket_server_task(void *pvParameters)
 {
     char addr_str[128];
-    char payload[] = "This message is from server\n";
     char rx_buffer[128];
     esp_err_t ret = ESP_OK;
     int err = 0;
     int len = 0;
     int listen_sock;
     int opt = 1;
-    int port = CONFIG_OPENTHEAD_EXAMPLE_TCP_SERVER_PORT;
+    int port = CONFIG_OPENTHREAD_CLI_TCP_SERVER_PORT;
     int client_sock = 0;
-    struct timeval timeout;
+    struct timeval timeout = { 0 };
     struct sockaddr_storage source_addr; // Large enough for both IPv6
     struct sockaddr_in6 listen_addr = { 0 };
     // The TCP server listen at the address "::", which means all addresses can be listened to.
@@ -108,7 +101,7 @@ static void tcp_socket_client_task(void *pvParameters)
     int client_sock;
     int err = 0;
     int len = 0;
-    int port = CONFIG_OPENTHEAD_EXAMPLE_TCP_SERVER_PORT;
+    int port = CONFIG_OPENTHREAD_CLI_TCP_SERVER_PORT;
     struct sockaddr_in6 dest_addr = { 0 };
 
     inet6_aton(host_ip, &dest_addr.sin6_addr);
@@ -118,7 +111,7 @@ static void tcp_socket_client_task(void *pvParameters)
     client_sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_IPV6);
     ESP_GOTO_ON_FALSE((client_sock >= 0), ESP_OK, exit, TAG, "Unable to create socket: errno %d", errno);
 
-    ESP_LOGI(TAG, "Socket created, connecting to %x:%x:%x:%x:%d", dest_addr.sin6_addr.un.u32_addr[0], dest_addr.sin6_addr.un.u32_addr[1], dest_addr.sin6_addr.un.u32_addr[2], dest_addr.sin6_addr.un.u32_addr[3], port);
+    ESP_LOGI(TAG, "Socket created, connecting to %s:%d", host_ip, port);
 
     err = connect(client_sock, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
     ESP_GOTO_ON_FALSE((err == 0), ESP_FAIL, exit, TAG, "Socket unable to connect: errno %d", errno);
@@ -156,10 +149,9 @@ void esp_ot_process_tcp_client(void *aContext, uint8_t aArgsLength, char *aArgs[
 {
     (void)(aContext);
     (void)(aArgsLength);
-    if (aArgs[0] == NULL) {
+    if (aArgsLength == 0) {
         ESP_LOGE(TAG, "Invalid arguments.");
     } else {
         xTaskCreate(tcp_socket_client_task, "ot_tcp_socket_client", 4096, aArgs[0], 4, NULL);
     }
 }
-#endif // CONFIG_OPENTHREAD_ENABLE_TCP_SOCKET_EXAMPLE

@@ -91,8 +91,8 @@ tinfl_decompress_mem_to_mem = 0x4000084c;
  ***************************************/
 
 /* Functions */
-jd_prepare = 0x40000858;
-jd_decomp = 0x40000864;
+PROVIDE( jd_prepare = 0x40000858 );
+PROVIDE (jd_decomp = 0x40000864 );
 
 
 /***************************************
@@ -128,6 +128,7 @@ PROVIDE( esp_rom_opiflash_write = 0x40000930 );
 PROVIDE( esp_rom_spi_set_dtr_swap_mode = 0x4000093c );
 PROVIDE( esp_rom_opiflash_exit_continuous_read_mode = 0x40000948 );
 PROVIDE( esp_rom_opiflash_legacy_driver_init = 0x40000954 );
+PROVIDE( esp_rom_opiflash_read_raw = 0x4004d9d4);
 /* Data (.data, .bss, .rodata) */
 PROVIDE( rom_opiflash_cmd_def = 0x3fcefff4 );
 PROVIDE( rom_spi_usr_cmd_legacy_funcs = 0x3fcefff0 );
@@ -333,7 +334,7 @@ PROVIDE( esp_flash_chip_driver_initialized = 0x400010bc );
 PROVIDE( esp_flash_read_id = 0x400010c8 );
 PROVIDE( esp_flash_get_size = 0x400010d4 );
 PROVIDE( esp_flash_erase_chip = 0x400010e0 );
-PROVIDE( esp_flash_erase_region = 0x400010ec );
+PROVIDE( rom_esp_flash_erase_region = 0x400010ec );
 PROVIDE( esp_flash_get_chip_write_protect = 0x400010f8 );
 PROVIDE( esp_flash_set_chip_write_protect = 0x40001104 );
 PROVIDE( esp_flash_get_protectable_regions = 0x40001110 );
@@ -1912,7 +1913,7 @@ rcSetTxAmpduLimit = 0x40005784;
 rcTxUpdatePer = 0x40005790;
 rcUpdateAckSnr = 0x4000579c;
 rcUpdateRate = 0x400057a8;
-rcUpdateTxDone = 0x400057b4;
+/* rcUpdateTxDone = 0x400057b4; */
 rcUpdateTxDoneAmpdu2 = 0x400057c0;
 rcUpSched = 0x400057cc;
 rssi_margin = 0x400057d8;
@@ -2026,7 +2027,7 @@ ic_reset_rx_ba = 0x40005a3c;
 ieee80211_align_eb = 0x40005a48;
 ieee80211_ampdu_reorder = 0x40005a54;
 ieee80211_ampdu_start_age_timer = 0x40005a60;
-ieee80211_encap_esfbuf = 0x40005a6c;
+/* ieee80211_encap_esfbuf = 0x40005a6c; */
 ieee80211_is_tx_allowed = 0x40005a78;
 ieee80211_output_pending_eb = 0x40005a84;
 ieee80211_output_process = 0x40005a90;

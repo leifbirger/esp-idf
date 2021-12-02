@@ -22,6 +22,9 @@
 #include "esp32c3/rom/uart.h"
 #elif CONFIG_IDF_TARGET_ESP32S3
 #include "esp32s3/rom/uart.h"
+#elif CONFIG_IDF_TARGET_ESP32H2
+#include "esp32h2/rom/ets_sys.h"
+#include "esp32h2/rom/uart.h"
 #endif
 #include "esp_rom_gpio.h"
 #include "esp_rom_uart.h"
@@ -68,8 +71,8 @@ void bootloader_console_init(void)
         gpio_hal_iomux_func_sel(PERIPHS_IO_MUX_U0RXD_U, PIN_FUNC_GPIO);
         gpio_hal_iomux_func_sel(PERIPHS_IO_MUX_U0TXD_U, PIN_FUNC_GPIO);
         // Route GPIO signals to/from pins
-        const uint32_t tx_idx = uart_periph_signal[uart_num].tx_sig;
-        const uint32_t rx_idx = uart_periph_signal[uart_num].rx_sig;
+        const uint32_t tx_idx = UART_PERIPH_SIGNAL(uart_num, SOC_UART_TX_PIN_IDX);
+        const uint32_t rx_idx = UART_PERIPH_SIGNAL(uart_num, SOC_UART_RX_PIN_IDX);
         PIN_INPUT_ENABLE(GPIO_PIN_MUX_REG[uart_rx_gpio]);
         esp_rom_gpio_pad_pullup_only(uart_rx_gpio);
         esp_rom_gpio_connect_out_signal(uart_tx_gpio, tx_idx, 0, 0);

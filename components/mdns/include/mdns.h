@@ -31,6 +31,11 @@ extern "C" {
 #define MDNS_TYPE_ANY               0x00FF
 
 /**
+ * @brief   Asynchronous query handle
+ */
+typedef struct mdns_search_once_s mdns_search_once_t;
+
+/**
  * @brief   mDNS enum to specify the ip_protocol type
  */
 typedef enum {
@@ -70,10 +75,13 @@ typedef struct mdns_result_s {
     struct mdns_result_s * next;            /*!< next result, or NULL for the last result in the list */
 
     mdns_if_t tcpip_if;                     /*!< interface index */
+    uint32_t ttl;                           /*!< time to live */
 
     mdns_ip_protocol_t ip_protocol;         /*!< ip_protocol type of the interface (v4/v6) */
     // PTR
     char * instance_name;                   /*!< instance name */
+    char * service_type;                    /*!< service type */
+    char * proto;                           /*!< srevice protocol */
     // SRV
     char * hostname;                        /*!< hostname */
     uint16_t port;                          /*!< service port */
@@ -84,6 +92,8 @@ typedef struct mdns_result_s {
     // A and AAAA
     mdns_ip_addr_t * addr;                  /*!< linked list of IP addresses found */
 } mdns_result_t;
+
+typedef void (*mdns_query_notify_t)(mdns_search_once_t *search);
 
 /**
  * @brief  Initialize mDNS on given interface
@@ -177,7 +187,10 @@ esp_err_t mdns_instance_name_set(const char * instance_name);
  * @note The value length of txt items will be automatically decided by strlen
  *
  * @param  instance_name    instance name to set. If NULL,
- *                          global instance name or hostname will be used
+ *                          global instance name or hostname will be used.
+ *                          Note that MDNS_MULTIPLE_INSTANCE config option
+ *                          needs to be enabled for adding multiple instances
+ *                          with the same instance type.
  * @param  service_type     service type (_http, _ftp, etc)
  * @param  proto            service protocol (_tcp, _udp)
  * @param  port             service port
@@ -199,6 +212,9 @@ esp_err_t mdns_service_add(const char * instance_name, const char * service_type
  *
  * @param  instance_name    instance name to set. If NULL,
  *                          global instance name or hostname will be used
+ *                          Note that MDNS_MULTIPLE_INSTANCE config option
+ *                          needs to be enabled for adding multiple instances
+ *                          with the same instance type.
  * @param  service_type     service type (_http, _ftp, etc)
  * @param  proto            service protocol (_tcp, _udp)
  * @param  hostname         service hostname. If NULL, local hostname will be used.
@@ -227,6 +243,22 @@ esp_err_t mdns_service_add_for_host(const char * instance_name, const char * ser
  *     - false  Service not found.
  */
 bool mdns_service_exists(const char * service_type, const char * proto, const char * hostname);
+
+
+/**
+ * @brief  Check whether a service has been added.
+ *
+ * @param  instance         instance name
+ * @param  service_type     service type (_http, _ftp, etc)
+ * @param  proto            service protocol (_tcp, _udp)
+ * @param  hostname         service hostname. If NULL, checks for the local hostname.
+ *
+ * @return
+ *     - true   Correspondding service has been added.
+ *     - false  Service not found.
+ */
+bool mdns_service_exists_with_instance(const char *instance, const char *service_type, const char *proto,
+                                       const char *hostname);
 
 /**
  * @brief  Remove service from mDNS server
@@ -476,6 +508,51 @@ esp_err_t mdns_service_txt_item_remove_for_host(const char * service_type, const
  *     - ESP_ERR_INVALID_ARG Parameter error
  */
 esp_err_t mdns_service_remove_all(void);
+
+/**
+ * @brief Deletes the finished query. Call this only after the search has ended!
+ *
+ * @param search pointer to search object
+ *
+ * @return
+ *     - ESP_OK success
+ *     - ESP_ERR_INVALID_STATE  search has not finished
+ *     - ESP_ERR_INVALID_ARG    pointer to search object is NULL
+ */
+esp_err_t mdns_query_async_delete(mdns_search_once_t* search);
+
+/**
+ * @brief Get results from search pointer. Results available as a pointer to the output parameter.
+ *        Pointer to search object has to be deleted via `mdns_query_async_delete` once the query has finished.
+ *        The results although have to be freed manually.
+ *
+ * @param search pointer to search object
+ * @param timeout time in milliseconds to wait for answers
+ * @param results pointer to the results of the query
+ *
+ * @return
+ *      True if search has finished before or at timeout
+ *      False if search timeout is over
+ */
+bool mdns_query_async_get_results(mdns_search_once_t* search, uint32_t timeout, mdns_result_t ** results);
+
+/**
+ * @brief  Query mDNS for host or service asynchronousely.
+ *         Search has to be tested for progress and deleted manually!
+ *
+ * @param  name         service instance or host name (NULL for PTR queries)
+ * @param  service_type service type (_http, _arduino, _ftp etc.) (NULL for host queries)
+ * @param  proto        service protocol (_tcp, _udp, etc.) (NULL for host queries)
+ * @param  type         type of query (MDNS_TYPE_*)
+ * @param  timeout      time in milliseconds during which mDNS query is active
+ * @param  max_results  maximum results to be collected
+ * @param  notifier     Notification function to be called when the result is ready, can be NULL
+ *
+ * @return mdns_search_once_s pointer to new search object if query initiated successfully.
+ *         NULL otherwise.
+ */
+mdns_search_once_t *mdns_query_async_new(const char *name, const char *service_type, const char *proto, uint16_t type,
+                                         uint32_t timeout, size_t max_results, mdns_query_notify_t notifier);
 
 /**
  * @brief  Query mDNS for host or service

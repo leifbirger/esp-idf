@@ -1,16 +1,11 @@
-// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+/* OpenThread Command Line Example
 
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include "esp_check.h"
 #include "esp_err.h"
@@ -19,7 +14,6 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 
-#if CONFIG_OPENTHREAD_ENABLE_UDP_SOCKET_EXAMPLE
 #define TAG "ot_socket"
 
 static void udp_socket_server_task(void *pvParameters)
@@ -31,8 +25,9 @@ static void udp_socket_server_task(void *pvParameters)
     int err = 0;
     int len;
     int listen_sock;
-    int port = CONFIG_OPENTHEAD_EXAMPLE_UDP_SERVER_PORT;
-    struct timeval timeout;
+
+    int port = CONFIG_OPENTHREAD_CLI_UDP_SERVER_PORT;
+    struct timeval timeout = { 0 };
     struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
     struct sockaddr_in6 listen_addr;
 
@@ -40,7 +35,7 @@ static void udp_socket_server_task(void *pvParameters)
     listen_addr.sin6_family = AF_INET6;
     listen_addr.sin6_port = htons(port);
 
-    listen_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_IPV6);
+    listen_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     ESP_GOTO_ON_FALSE((listen_sock >= 0), ESP_OK, exit, TAG, "Unable to create socket: errno %d", errno);
     ESP_LOGI(TAG, "Socket created");
 
@@ -88,7 +83,7 @@ static void udp_socket_client_task(void *pvParameters)
     char *host_ip = (char *)pvParameters;
     char *payload = "This message is from client\n";
     int client_sock;
-    int port = CONFIG_OPENTHEAD_EXAMPLE_UDP_SERVER_PORT;
+    int port = CONFIG_OPENTHREAD_CLI_UDP_SERVER_PORT;
     int err = 0;
     int len;
     esp_err_t ret = ESP_OK;
@@ -99,7 +94,7 @@ static void udp_socket_client_task(void *pvParameters)
     dest_addr.sin6_family = AF_INET6;
     dest_addr.sin6_port = htons(port);
 
-    client_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_IPV6);
+    client_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     ESP_GOTO_ON_FALSE((client_sock >= 0), ESP_OK, exit, TAG, "Unable to create socket: errno %d", errno);
     ESP_LOGI(TAG, "Socket created, sending to %s:%d", host_ip, port);
 
@@ -136,10 +131,9 @@ void esp_ot_process_udp_client(void *aContext, uint8_t aArgsLength, char *aArgs[
 {
     (void)(aContext);
     (void)(aArgsLength);
-    if (aArgs[0] == NULL) {
+    if (aArgsLength == 0) {
         ESP_LOGE(TAG, "Invalid arguments.");
     } else {
         xTaskCreate(udp_socket_client_task, "ot_udp_socket_client", 4096, aArgs[0], 4, NULL);
     }
 }
-#endif // CONFIG_OPENTHREAD_ENABLE_UDP_SOCKET_EXAMPLE

@@ -1,16 +1,11 @@
-// Copyright 2021 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+/* OpenThread Border Router Example
 
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -24,12 +19,13 @@
 #include "esp_netif_net_stack.h"
 #include "esp_openthread.h"
 #include "esp_openthread_border_router.h"
-#include "esp_openthread_defaults.h"
 #include "esp_openthread_lock.h"
 #include "esp_openthread_netif_glue.h"
 #include "esp_openthread_types.h"
+#include "esp_ot_config.h"
 #include "esp_vfs_eventfd.h"
 #include "esp_wifi.h"
+#include "mdns.h"
 #include "nvs_flash.h"
 #include "protocol_examples_common.h"
 #include "sdkconfig.h"
@@ -51,6 +47,8 @@
 #include "openthread/thread_ftd.h"
 
 #define TAG "esp_ot_br"
+
+extern void otAppCliInit(otInstance *aInstance);
 
 static int hex_digit_to_int(char hex)
 {
@@ -89,6 +87,12 @@ static size_t hex_string_to_binary(const char *hex_string, uint8_t *buf, size_t 
 static void create_config_network(otInstance *instance)
 {
     otOperationalDataset dataset;
+
+    if (otDatasetGetActive(instance, &dataset) == OT_ERROR_NONE) {
+        ESP_LOGI(TAG, "Already has network, skip configuring OpenThread network.");
+        return;
+    }
+
     uint16_t network_name_len = strnlen(CONFIG_OPENTHREAD_NETWORK_NAME, OT_NETWORK_NAME_MAX_SIZE + 1);
 
     assert(network_name_len <= OT_NETWORK_NAME_MAX_SIZE);
@@ -109,12 +113,12 @@ static void create_config_network(otInstance *instance)
         abort();
     }
     dataset.mComponents.mIsExtendedPanIdPresent = true;
-    if (hex_string_to_binary(CONFIG_OPENTHREAD_NETWORK_MASTERKEY, dataset.mMasterKey.m8,
-                             sizeof(dataset.mMasterKey.m8)) != sizeof(dataset.mMasterKey.m8)) {
+    if (hex_string_to_binary(CONFIG_OPENTHREAD_NETWORK_MASTERKEY, dataset.mNetworkKey.m8,
+                             sizeof(dataset.mNetworkKey.m8)) != sizeof(dataset.mNetworkKey.m8)) {
         ESP_LOGE(TAG, "Cannot convert OpenThread master key. Please double-check your config.");
         abort();
     }
-    dataset.mComponents.mIsMasterKeyPresent = true;
+    dataset.mComponents.mIsNetworkKeyPresent = true;
     if (hex_string_to_binary(CONFIG_OPENTHREAD_NETWORK_PSKC, dataset.mPskc.m8, sizeof(dataset.mPskc.m8)) !=
             sizeof(dataset.mPskc.m8)) {
         ESP_LOGE(TAG, "Cannot convert OpenThread pre-shared commissioner key. Please double-check your config.");
@@ -129,6 +133,11 @@ static void create_config_network(otInstance *instance)
         ESP_LOGE(TAG, "Failed to register border router.");
         abort();
     }
+    return;
+}
+
+static void launch_openthread_network(otInstance *instance)
+{
     if (otIp6SetEnabled(instance, true) != OT_ERROR_NONE) {
         ESP_LOGE(TAG, "Failed to enable OpenThread IP6 link");
         abort();
@@ -137,14 +146,14 @@ static void create_config_network(otInstance *instance)
         ESP_LOGE(TAG, "Failed to enable OpenThread");
         abort();
     }
-    return;
 }
 
 static void ot_task_worker(void *aContext)
 {
     esp_openthread_platform_config_t config = {
-        .radio_config = ESP_OPENTHREAD_DEFAULT_RADIO_UART_RCP_CONFIG(4, 5),
-        .host_config = ESP_OPENTHREAD_DEFAULT_UART_HOST_CONFIG(),
+        .radio_config = ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG(),
+        .host_config = ESP_OPENTHREAD_DEFAULT_HOST_CONFIG(),
+        .port_config = ESP_OPENTHREAD_DEFAULT_PORT_CONFIG(),
     };
 
     esp_netif_config_t cfg = ESP_NETIF_DEFAULT_OPENTHREAD();
@@ -155,11 +164,13 @@ static void ot_task_worker(void *aContext)
     ESP_ERROR_CHECK(esp_openthread_init(&config));
 
     // Initialize border routing features
-    ESP_ERROR_CHECK(esp_netif_attach(openthread_netif, esp_openthread_netif_glue_init()));
+    ESP_ERROR_CHECK(esp_netif_attach(openthread_netif, esp_openthread_netif_glue_init(&config)));
     ESP_ERROR_CHECK(esp_openthread_border_router_init(get_example_netif()));
 
     esp_openthread_lock_acquire(portMAX_DELAY);
+    otAppCliInit(esp_openthread_get_instance());
     create_config_network(esp_openthread_get_instance());
+    launch_openthread_network(esp_openthread_get_instance());
     esp_openthread_lock_release();
 
     // Run the main loop
@@ -177,8 +188,9 @@ void app_main(void)
     // Used eventfds:
     // * netif
     // * task queue
+    // * border router
     esp_vfs_eventfd_config_t eventfd_config = {
-        .max_fds = 2,
+        .max_fds = 3,
     };
     ESP_ERROR_CHECK(esp_vfs_eventfd_register(&eventfd_config));
 
@@ -187,5 +199,7 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(example_connect());
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+    ESP_ERROR_CHECK(mdns_init());
+    ESP_ERROR_CHECK(mdns_hostname_set("esp-ot-br"));
     xTaskCreate(ot_task_worker, "ot_br_main", 20480, xTaskGetCurrentTaskHandle(), 5, NULL);
 }

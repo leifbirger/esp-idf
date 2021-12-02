@@ -30,13 +30,6 @@ set(srcs "port/os_xtensa.c"
     "src/eap_peer/eap_tls_common.c"
     "src/eap_peer/eap_ttls.c"
     "src/eap_peer/mschapv2.c"
-    "src/esp_supplicant/esp_hostap.c"
-    "src/esp_supplicant/esp_wpa2.c"
-    "src/esp_supplicant/esp_wpa_main.c"
-    "src/esp_supplicant/esp_wpas_glue.c"
-    "src/esp_supplicant/esp_wps.c"
-    "src/esp_supplicant/esp_wpa3.c"
-    "src/esp_supplicant/esp_dpp.c"
     "src/rsn_supp/pmksa_cache.c"
     "src/rsn_supp/wpa.c"
     "src/rsn_supp/wpa_ie.c"
@@ -56,6 +49,14 @@ set(srcs "port/os_xtensa.c"
     "src/wps/wps_enrollee.c"
     "src/wps/wps_registrar.c"
     "src/wps/wps_validate.c")
+
+set(esp_srcs "esp_supplicant/src/esp_hostap.c"
+    "esp_supplicant/src/esp_wpa2.c"
+    "esp_supplicant/src/esp_wpa_main.c"
+    "esp_supplicant/src/esp_wpas_glue.c"
+    "esp_supplicant/src/esp_wps.c"
+    "esp_supplicant/src/esp_wpa3.c"
+    "esp_supplicant/src/esp_dpp.c")
 
 if(CONFIG_WPA_MBEDTLS_CRYPTO)
     set(tls_src "src/crypto/tls_mbedtls.c")
@@ -135,6 +136,8 @@ else()
     "src/crypto/sha1-pbkdf2.c"
     "src/crypto/sha1.c"
     "src/crypto/sha256-internal.c"
+    "src/crypto/sha384-internal.c"
+    "src/crypto/sha512-internal.c"
     "src/crypto/sha256.c")
 endif()
 
@@ -145,16 +148,21 @@ if(CONFIG_WPA_11KV_SUPPORT)
     "src/common/bss.c"
     "src/common/scan.c"
     "src/common/ieee802_11_common.c"
-    "src/esp_supplicant/esp_common.c"
-    "src/esp_supplicant/esp_scan.c"
+    "esp_supplicant/src/esp_common.c"
+    "esp_supplicant/src/esp_scan.c"
     )
 else()
     set(roaming_src "")
 endif()
+if(CONFIG_WPA_MBO_SUPPORT)
+    set(mbo_src "src/common/mbo.c")
+else()
+    set(mbo_src "")
+endif()
 
-idf_component_register(SRCS "${srcs}" "${tls_src}" "${roaming_src}" "${crypto_src}"
-                    INCLUDE_DIRS include port/include include/esp_supplicant
-                    PRIV_INCLUDE_DIRS src src/utils
+idf_component_register(SRCS "${srcs}" ${esp_srcs} "${tls_src}" "${roaming_src}" "${crypto_src}" "${mbo_src}"
+                    INCLUDE_DIRS include port/include esp_supplicant/include
+                    PRIV_INCLUDE_DIRS src src/utils esp_supplicant/src
                     PRIV_REQUIRES mbedtls esp_timer)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-strict-aliasing -Wno-write-strings)
@@ -183,5 +191,11 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 if(CONFIG_ESP32_WIFI_ENABLE_WPA3_SAE)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_WPA3_SAE)
 endif()
+if(CONFIG_WPA_WPS_STRICT)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_WPS_STRICT)
+endif()
 
+if(CONFIG_WPA_MBO_SUPPORT)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_MBO)
+endif()
 set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_INTERFACE_MULTIPLICITY 3)
